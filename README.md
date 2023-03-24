@@ -28,3 +28,8 @@ ele no .gitignore, não será enviada suas configurações privadas do projeto.
 
 - É necessário bindar uma porta livre para o gin, caso contrário, a aplicação não será inicializada
 
+- Para adicionar regras para o body da request, é necessário utilizar o validator, colocando 
+a propriedade binding no json do campo do objeto, assim informando as regras necessárias.
+
+- Para criptografia da senha foi utilizada a lib hex e md5
+
