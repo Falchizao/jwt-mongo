@@ -1,31 +1,49 @@
 package controller
 
 import (
-	"fmt"
 	"net/http"
 
-	"github.com/Falchizao/api-golang/src/configuration/handling_err"
-	"github.com/Falchizao/api-golang/src/controller/model"
-	"github.com/Falchizao/api-golang/src/controller/model/request"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
-func CreateUser(c *gin.Context) {
-	var user_req request.UserRequest
+func (uc *userControllerInterface) CreateUser(c *gin.Context) {
+	logger.Info("Init CreateUser controller",
+		zap.String("journey", "createUser"),
+	)
+	var userRequest request.UserRequest
 
-	if err := c.ShouldBindJSON(&user_req); err != nil {
-		restErr := handling_err.NewBadRequestError(fmt.Sprintf("Campos incorretos, erro=%s", err.Error()))
+	if err := c.ShouldBindJSON(&userRequest); err != nil {
+		logger.Error("Error trying to validate user info", err,
+			zap.String("journey", "createUser"))
+		errRest := validation.ValidateUserError(err)
 
-		c.JSON(restErr.Code, restErr)
+		c.JSON(errRest.Code, errRest)
 		return
 	}
 
-	user := model.NewUser(user_req.Email, user_req.Password, user_req.Name, user_req.Age)
-
-	if err := user.Create(); err != nil {
+	domain := model.NewUserDomain(
+		userRequest.Email,
+		userRequest.Password,
+		userRequest.Name,
+		userRequest.Age,
+	)
+	domainResult, err := uc.service.CreateUserServices(domain)
+	if err != nil {
+		logger.Error(
+			"Error trying to call CreateUser service",
+			err,
+			zap.String("journey", "createUser"))
 		c.JSON(err.Code, err)
 		return
 	}
 
-	c.String(http.StatusOK, "")
+	logger.Info(
+		"CreateUser controller executed successfully",
+		zap.String("userId", domainResult.GetID()),
+		zap.String("journey", "createUser"))
+
+	c.JSON(http.StatusOK, view.ConvertDomainToResponse(
+		domainResult,
+	))
 }
