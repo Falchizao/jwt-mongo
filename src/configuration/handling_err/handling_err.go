@@ -1,4 +1,4 @@
-package handling_err
+package rest_err
 
 import "net/http"
 
